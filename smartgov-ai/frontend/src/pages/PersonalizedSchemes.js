@@ -10,6 +10,7 @@ function PersonalizedSchemes() {
   const [selectedScheme, setSelectedScheme] = useState(null);
   const [filterCategory, setFilterCategory] = useState('all');
   const [savedSchemesOnly, setSavedSchemesOnly] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     loadSchemes();
@@ -66,9 +67,26 @@ function PersonalizedSchemes() {
   };
 
   const filteredSchemes = schemes.filter((scheme) => {
+    // Category filter
     if (filterCategory !== 'all' && scheme.category !== filterCategory) {
       return false;
     }
+
+    // Search filter - search across multiple fields
+    if (searchTerm) {
+      const searchLower = searchTerm.toLowerCase();
+      const matchesSearch =
+        scheme.name.toLowerCase().includes(searchLower) ||
+        scheme.description.toLowerCase().includes(searchLower) ||
+        (scheme.eligibility && scheme.eligibility.toLowerCase().includes(searchLower)) ||
+        (scheme.benefits && scheme.benefits.toLowerCase().includes(searchLower)) ||
+        scheme.category.toLowerCase().includes(searchLower);
+
+      if (!matchesSearch) {
+        return false;
+      }
+    }
+
     return true;
   });
 
@@ -90,11 +108,25 @@ function PersonalizedSchemes() {
         <p>Personalized schemes based on your profile</p>
 
         <div className="schemes-filters">
-          <input
-            type="text"
-            placeholder="Search schemes..."
-            className="search-input"
-          />
+          <div className="search-container">
+            <span className="search-icon">🔍</span>
+            <input
+              type="text"
+              placeholder="Search schemes by name, description, category..."
+              className="search-input"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+            {searchTerm && (
+              <button
+                className="clear-search"
+                onClick={() => setSearchTerm('')}
+                title="Clear search"
+              >
+                ✕
+              </button>
+            )}
+          </div>
           <select
             value={filterCategory}
             onChange={(e) => setFilterCategory(e.target.value)}
@@ -108,6 +140,20 @@ function PersonalizedSchemes() {
             <option value="Agriculture">Agriculture</option>
           </select>
         </div>
+
+        {(searchTerm || filterCategory !== 'all') && (
+          <div className="filter-info">
+            <span className="result-count">
+              Showing {filteredSchemes.length} of {schemes.length} schemes
+            </span>
+            {searchTerm && (
+              <span className="active-filter">Search: "{searchTerm}"</span>
+            )}
+            {filterCategory !== 'all' && (
+              <span className="active-filter">Category: {filterCategory}</span>
+            )}
+          </div>
+        )}
       </div>
 
       {error && <div className="alert alert-error">{error}</div>}
